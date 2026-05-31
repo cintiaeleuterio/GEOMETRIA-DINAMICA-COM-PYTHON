@@ -1,0 +1,562 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import ipywidgets as widgets
+
+from IPython.display import display, clear_output
+
+# =====================================================
+# CONTROLES
+# =====================================================
+
+forma = widgets.Dropdown(
+    options=[
+        "Triângulo",
+        "Quadrado",
+        "Retângulo",
+        "Trapézio",
+        "Circunferência"
+    ],
+    value="Triângulo",
+    description="Forma:"
+)
+
+x_slider = widgets.FloatSlider(
+    min=-10, max=10,
+    step=0.5,
+    value=0,
+    description='x'
+)
+
+y_slider = widgets.FloatSlider(
+    min=-10, max=10,
+    step=0.5,
+    value=0,
+    description='y'
+)
+
+largura_slider = widgets.FloatSlider(
+    min=1, max=10,
+    step=0.5,
+    value=5,
+    description='Largura'
+)
+
+altura_slider = widgets.FloatSlider(
+    min=1, max=10,
+    step=0.5,
+    value=4,
+    description='Altura'
+)
+
+raio_slider = widgets.FloatSlider(
+    min=1, max=10,
+    step=0.5,
+    value=3,
+    description='Raio'
+)
+
+output = widgets.Output()
+
+from IPython.display import display, clear_output, Math
+
+formula_output = widgets.Output()
+
+info_html = widgets.HTML(
+    value="""
+    <h3>Propriedades</h3>
+    """
+)
+
+# =====================================================
+# FUNÇÕES AUXILIARES
+# =====================================================
+
+def mostrar_vertices(xs, ys, nomes=None):
+
+    if nomes is None:
+        nomes = [f"P{i+1}" for i in range(len(xs))]
+
+    for nome, x, y in zip(nomes, xs, ys):
+
+        plt.scatter(x, y, s=60, zorder=5)
+
+        plt.text(
+            x + 0.15,
+            y + 0.15,
+            f"{nome}({x:.1f},{y:.1f})",
+            fontsize=9
+        )
+
+
+def ajustar_limites(xs, ys):
+
+    margem = 2
+
+    xmin = min(xs) - margem
+    xmax = max(xs) + margem
+
+    ymin = min(ys) - margem
+    ymax = max(ys) + margem
+
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+
+# =====================================================
+# ATIVAR / DESATIVAR CONTROLES
+# =====================================================
+
+def atualizar_controles(*args):
+
+    f = forma.value
+
+    largura_slider.disabled = False
+    altura_slider.disabled = False
+    raio_slider.disabled = False
+
+    if f == "Circunferência":
+
+        largura_slider.disabled = True
+        altura_slider.disabled = True
+
+    elif f == "Quadrado":
+
+        altura_slider.disabled = True
+        raio_slider.disabled = True
+
+    else:
+
+        raio_slider.disabled = True
+
+# =====================================================
+# DESENHO
+# =====================================================
+
+def desenhar(*args):
+
+    with output:
+
+        clear_output(wait=True)
+
+        plt.figure(figsize=(5, 5))
+
+        f = forma.value
+
+        x1 = x_slider.value
+        y1 = y_slider.value
+
+        largura = largura_slider.value
+        altura = altura_slider.value
+
+        raio = raio_slider.value
+
+        area = 0
+        perimetro = 0
+
+        # =================================================
+        # TRIÂNGULO
+        # =================================================
+
+        if f == "Triângulo":
+
+            A = (x1, y1)
+            B = (x1 + largura, y1)
+            C = (x1 + largura/2, y1 + altura)
+
+            xs = [A[0], B[0], C[0]]
+            ys = [A[1], B[1], C[1]]
+
+            plt.fill(xs, ys, alpha=0.4)
+
+            plt.plot(
+                xs + [xs[0]],
+                ys + [ys[0]],
+                linewidth=3
+            )
+
+            mostrar_vertices(xs, ys, ["A","B","C"])
+            #mostrar_centroide(xs, ys)
+
+            area = abs(
+                A[0]*(B[1]-C[1]) +
+                B[0]*(C[1]-A[1]) +
+                C[0]*(A[1]-B[1])
+            ) / 2
+
+            AB = np.hypot(B[0]-A[0], B[1]-A[1])
+            BC = np.hypot(C[0]-B[0], C[1]-B[1])
+            AC = np.hypot(C[0]-A[0], C[1]-A[1])
+
+            perimetro = AB + BC + AC
+
+            with formula_output:
+              clear_output(wait=True)
+
+              display(Math(r"\mathrm{Área\ do\ Triângulo}"))
+
+              display(Math(
+                rf"""
+                A=\frac{{b\,h}}{{2}}
+                =
+                \frac{{{largura:.2f}\cdot{altura:.2f}}}{{2}}
+                =
+                {area:.2f}
+                """
+           ))
+
+
+            plt.text(
+                (A[0]+B[0])/2,
+                (A[1]+B[1])/2 - 0.4,
+                f"{AB:.2f}"
+            )
+
+            plt.text(
+                (B[0]+C[0])/2,
+                (B[1]+C[1])/2,
+                f"{BC:.2f}"
+            )
+
+            plt.text(
+                (A[0]+C[0])/2,
+                (A[1]+C[1])/2,
+                f"{AC:.2f}"
+            )
+
+            ajustar_limites(xs, ys)
+
+        # =================================================
+        # QUADRADO
+        # =================================================
+
+        elif f == "Quadrado":
+
+            xs = [x1, x1+largura, x1+largura, x1]
+            ys = [y1, y1, y1+largura, y1+largura]
+
+            plt.fill(xs, ys, alpha=0.4)
+
+            plt.plot(
+                xs + [xs[0]],
+                ys + [ys[0]],
+                linewidth=3
+            )
+
+            mostrar_vertices(xs, ys, ["A","B","C","D"])
+            #mostrar_centroide(xs, ys)
+
+            area = largura**2
+            perimetro = 4*largura
+
+            with formula_output:
+              clear_output(wait=True)
+
+              display(Math(r"\mathrm{Área\ do\ Quadrado}"))
+
+              display(Math(
+                rf"""
+                A=l^2
+                =
+                ({largura:.2f})^2
+                =
+                {area:.2f}
+                """
+            ))
+
+            ajustar_limites(xs, ys)
+
+        # =================================================
+        # RETÂNGULO
+        # =================================================
+
+        elif f == "Retângulo":
+
+            xs = [x1, x1+largura, x1+largura, x1]
+            ys = [y1, y1, y1+altura, y1+altura]
+
+            plt.fill(xs, ys, alpha=0.4)
+
+            plt.plot(
+                xs + [xs[0]],
+                ys + [ys[0]],
+                linewidth=3
+            )
+
+            mostrar_vertices(xs, ys, ["A","B","C","D"])
+            #mostrar_centroide(xs, ys)
+
+            area = largura * altura
+            perimetro = 2 * (largura + altura)
+
+            with formula_output:
+              clear_output(wait=True)
+
+              display(Math(r"\mathrm{Área\ do\ Retângulo}"))
+
+              display(Math(
+                rf"""
+                A=bh
+                =
+                {largura:.2f}\cdot{altura:.2f}
+                =
+                {area:.2f}
+                """
+            ))
+
+            plt.text(
+                x1 + largura/2,
+                y1 - 0.5,
+                f"L={largura:.1f}",
+                ha='center'
+            )
+
+            plt.text(
+                x1 - 0.5,
+                y1 + altura/2,
+                f"H={altura:.1f}",
+                rotation=90,
+                va='center'
+            )
+
+            ajustar_limites(xs, ys)
+
+        # =================================================
+        # TRAPÉZIO
+        # =================================================
+
+        elif f == "Trapézio":
+
+            base_maior = largura
+            base_menor = largura * 0.5
+
+            xs = [
+                x1,
+                x1 + base_maior,
+                x1 + (base_maior + base_menor)/2,
+                x1 + (base_maior - base_menor)/2
+            ]
+
+            ys = [
+                y1,
+                y1,
+                y1 + altura,
+                y1 + altura
+            ]
+
+            plt.fill(xs, ys, alpha=0.4)
+
+            plt.plot(
+                xs + [xs[0]],
+                ys + [ys[0]],
+                linewidth=3
+            )
+
+            mostrar_vertices(xs, ys, ["A","B","C","D"])
+            #mostrar_centroide(xs, ys)
+
+            area = ((base_maior + base_menor) * altura) / 2
+
+            AB = np.hypot(xs[1]-xs[0], ys[1]-ys[0])
+            BC = np.hypot(xs[2]-xs[1], ys[2]-ys[1])
+            CD = np.hypot(xs[3]-xs[2], ys[3]-ys[2])
+            DA = np.hypot(xs[0]-xs[3], ys[0]-ys[3])
+
+            perimetro = AB + BC + CD + DA
+
+            with formula_output:
+              clear_output(wait=True)
+
+              display(Math(r"\mathrm{Área\ do\ Trapézio}"))
+
+              display(Math(
+                rf"""
+                A=\frac{{(B+b)h}}{{2}}
+                =
+                \frac{{({base_maior:.2f}+{base_menor:.2f})\cdot{altura:.2f}}}{{2}}
+                =
+                {area:.2f}
+                """
+            ))
+
+            ajustar_limites(xs, ys)
+
+        # =================================================
+        # CIRCUNFERÊNCIA
+        # =================================================
+
+        elif f == "Circunferência":
+
+            theta = np.linspace(0, 2*np.pi, 500)
+
+            x = x1 + raio*np.cos(theta)
+            y = y1 + raio*np.sin(theta)
+
+            plt.fill(
+                x,
+                y,
+                alpha=0.4
+            )
+
+            plt.plot(
+                x,
+                y,
+                linewidth=3
+            )
+
+            plt.scatter(
+                x1,
+                y1,
+                s=80
+            )
+
+            #plt.text(
+            #    x1 + 0.2,
+            #    y1 + 0.2,
+            #    f"Centro ({x1:.1f},{y1:.1f})"
+            #)
+
+            plt.plot(
+                [x1, x1 + raio],
+                [y1, y1],
+                '--',
+                linewidth=2
+            )
+
+            plt.text(
+                x1 + raio/2,
+                y1 + 0.3,
+                f"r={raio:.1f}"
+            )
+
+            area = np.pi * raio**2
+            perimetro = 2 * np.pi * raio
+
+            with formula_output:
+              clear_output(wait=True)
+
+              display(Math(r"\mathrm{Área\ da\ Circunferência}"))
+
+              display(Math(
+                rf"""
+                A=\pi r^2
+                =
+                \pi({raio:.2f})^2
+                =
+                {area:.2f}
+                """
+            ))
+
+            ajustar_limites(
+                [x1-raio, x1+raio],
+                [y1-raio, y1+raio]
+            )
+
+        # =================================================
+        # PLANO CARTESIANO
+        # =================================================
+
+        plt.axhline(
+            0,
+            color='black',
+            linewidth=1
+        )
+
+        plt.axvline(
+            0,
+            color='black',
+            linewidth=1
+        )
+
+        plt.minorticks_on()
+
+        plt.grid(
+            which='major',
+            linestyle='-',
+            alpha=0.5
+        )
+
+        plt.grid(
+            which='minor',
+            linestyle=':',
+            alpha=0.3
+        )
+
+        plt.xlabel("x")
+        plt.ylabel("y")
+
+        plt.title(f"{f}")
+
+        plt.gca().set_aspect('equal')
+
+        plt.show()
+
+        info_html.value = f"""
+        <h3>Propriedades</h3>
+
+        <table>
+        <tr>
+        <td><b>Forma</b></td>
+        <td>{f}</td>
+        </tr>
+
+        <tr>
+        <td><b>Área</b></td>
+        <td>{area:.4f}</td>
+        </tr>
+
+        <tr>
+        <td><b>Perímetro</b></td>
+        <td>{perimetro:.4f}</td>
+        </tr>
+        </table>
+        """
+# =====================================================
+# EVENTOS
+# =====================================================
+
+forma.observe(
+    atualizar_controles,
+    names='value'
+)
+
+for w in [
+    forma,
+    x_slider,
+    y_slider,
+    largura_slider,
+    altura_slider,
+    raio_slider
+]:
+    w.observe(
+        desenhar,
+        names='value'
+    )
+
+# =====================================================
+# INICIALIZAÇÃO
+# =====================================================
+
+atualizar_controles()
+
+painel_controles = widgets.VBox([
+    forma,
+    x_slider,
+    y_slider,
+    largura_slider,
+    altura_slider,
+    raio_slider
+])
+
+painel_lateral = widgets.VBox([
+    formula_output,
+    info_html
+])
+
+interface = widgets.HBox([
+    painel_controles,
+    output,
+    painel_lateral
+])
+
+display(interface)
+
+desenhar()
